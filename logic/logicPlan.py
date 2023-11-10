@@ -50,7 +50,16 @@ def sentence1() -> Expr:
     (not A) or (not B) or C
     """
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    A = Expr('A')
+    B = Expr('B')
+    C = Expr('C')
+    list_proposition = []
+    list_proposition.append(disjoin(A,B))
+    list_proposition.append(~A % (~B | C))
+    list_proposition.append(disjoin(~A, ~B, C))
+
+    return conjoin(list_proposition)
+    #util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
 
@@ -63,7 +72,16 @@ def sentence2() -> Expr:
     (not D) implies C
     """
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    A ,B ,C, D = Expr('A'), Expr('B'), Expr('C'), Expr('D')
+    list_proposition2 = []
+
+    list_proposition2.append(C % (B | D))
+    list_proposition2.append(A >> ((~B) & (~D)))
+    list_proposition2.append(~(B & (~C)) >> A)
+    list_proposition2.append((~D) >> C)
+
+    return conjoin(list_proposition2)
+    #util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
 
@@ -80,7 +98,18 @@ def sentence3() -> Expr:
     Pacman is born at time 0.
     """
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    A0 = PropSymbolExpr("PacmanAlive_0")
+    A1 = PropSymbolExpr("PacmanAlive_1")
+    B0 = PropSymbolExpr("PacmanBorn_0")
+    K0 = PropSymbolExpr("PacmanKilled_0")
+
+    list_proposition3 = []
+    list_proposition3.append(A1 % ((A0 & ~K0) | (~A0 & B0)))
+    list_proposition3.append(~(A0 & B0))
+    list_proposition3.append(B0)
+
+    return conjoin(list_proposition3)
+    #util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
 def findModel(sentence: Expr) -> Dict[Expr, bool]:
@@ -93,18 +122,26 @@ def findModel(sentence: Expr) -> Dict[Expr, bool]:
 def findModelUnderstandingCheck() -> Dict[Expr, bool]:
     """Returns the result of findModel(Expr('a')) if lower cased expressions were allowed.
     You should not use findModel or Expr in this method.
+    Want to return {a : True} , not {'a': True} or {A: True}
     """
     a = Expr('A')
     "*** BEGIN YOUR CODE HERE ***"
-    print("a.__dict__ is:", a.__dict__) # might be helpful for getting ideas
-    util.raiseNotDefined()
+    #print("a.__dict__ is:", a.__dict__) # might be helpful for getting ideas
+    
+    from sympy import symbols
+    b = symbols(str(a).lower())
+    return {b: True}
+    #util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
 def entails(premise: Expr, conclusion: Expr) -> bool:
     """Returns True if the premise entails the conclusion and False otherwise.
     """
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    if findModel(~conclusion & premise) == False :
+        return True
+    return False
+    #util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
 def plTrueInverse(assignments: Dict[Expr, bool], inverse_statement: Expr) -> bool:
@@ -112,7 +149,8 @@ def plTrueInverse(assignments: Dict[Expr, bool], inverse_statement: Expr) -> boo
     pl_true may be useful here; see logic.py for its description.
     """
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return pl_true(~inverse_statement, assignments)
+    #util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
 #______________________________________________________________________________
