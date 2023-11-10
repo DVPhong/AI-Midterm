@@ -136,7 +136,16 @@ class DigitClassificationModel(object):
     def __init__(self):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
-
+        self.alpha = 0.05
+        self.batch_size = 32
+        self.w1 = nn.Parameter(784, 256)
+        self.b1 = nn.Parameter(1, 256)
+        self.w2 = nn.Parameter(256, 128)
+        self.b2 = nn.Parameter(1, 128)
+        self.w3 = nn.Parameter(128, 64)
+        self.b3 = nn.Parameter(1, 64)
+        self.w4 = nn.Parameter(64, 10)
+        self.b4 = nn.Parameter(1, 10)
     def run(self, x):
         """
         Runs the model for a batch of examples.
@@ -152,7 +161,18 @@ class DigitClassificationModel(object):
                 (also called logits)
         """
         "*** YOUR CODE HERE ***"
-
+        linear1 = nn.Linear(x, self.w1)
+        addbias1 = nn.AddBias(linear1, self.b1)
+        layer1 = nn.ReLU(addbias1)
+        linear2 = nn.Linear(layer1, self.w2)
+        addbias2 = nn.AddBias(linear2, self.b2)
+        layer2 = nn.ReLU(addbias2)
+        linear3 = nn.Linear(layer2, self.w3)
+        addbias3 = nn.AddBias(linear3, self.b3)
+        layer3 = nn.ReLU(addbias3)
+        linear4 = nn.Linear(layer3, self.w4)
+        layer4 = nn.AddBias(linear4, self.b4)
+        return layer4
     def get_loss(self, x, y):
         """
         Computes the loss for a batch of examples.
@@ -167,13 +187,26 @@ class DigitClassificationModel(object):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
-
+        return nn.SoftmaxLoss(self.run(x), y)
     def train(self, dataset):
         """
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
-
+        while True:
+            for x, y in dataset.iterate_once(self.batch_size):
+                loss = self.get_loss(x, y)
+                gradients = nn.gradients(loss, [self.w1, self.b1, self.w2, self.b2, self.w3, self.b3, self.w4, self.b4])
+                self.w1.update(gradients[0], -self.alpha)
+                self.b1.update(gradients[1], -self.alpha)
+                self.w2.update(gradients[2], -self.alpha)
+                self.b2.update(gradients[3], -self.alpha)
+                self.w3.update(gradients[4], -self.alpha)
+                self.b3.update(gradients[5], -self.alpha)
+                self.w4.update(gradients[6], -self.alpha)
+                self.b4.update(gradients[7], -self.alpha)
+            if dataset.get_validation_accuracy() >= 0.97:
+                break
 class LanguageIDModel(object):
     """
     A model for language identification at a single-word granularity.
