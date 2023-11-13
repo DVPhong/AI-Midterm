@@ -225,7 +225,15 @@ class LanguageIDModel(object):
 
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
-
+        self.hidden_d = 200
+        self.batch_size = 64
+        self.alpha = 0.1
+        self.weight_input = nn.Parameter(self.num_chars, self.hidden_d)
+        self.bias_input = nn.Parameter(1, self.hidden_d)
+        self.weight_hidden = nn.Parameter(self.hidden_d, self.hidden_d)
+        self.bias_hidden = nn.Parameter(1, self.hidden_d)
+        self.weight_out = nn.Parameter(self.hidden_d, len(self.languages))
+        self.bias_out = nn.Parameter(1, len(self.languages))
     def run(self, xs):
         """
         Runs the model for a batch of examples.
@@ -256,7 +264,20 @@ class LanguageIDModel(object):
                 (also called logits)
         """
         "*** YOUR CODE HERE ***"
-
+        linear0 = nn.Linear(xs[0], self.weight_input)
+        z0 = nn.AddBias(linear0, self.bias_input)
+        h = nn.ReLU(z0)
+        for i in xs[1:]:
+            hidden1 = nn.Linear(h, self.weight_hidden)
+            linear1 = nn.Linear(i, self.weight_input)
+            sum = nn.Add(linear1, hidden1)
+            z1 = nn.AddBias(sum, self.bias_hidden)
+            h = nn.ReLU(z1)
+        linear2 = nn.Linear(h, self.weight_out)
+        addbias2 = nn.AddBias(linear2, self.bias_out)
+        out = nn.ReLU(addbias2)
+        return out        
+        
     def get_loss(self, xs, y):
         """
         Computes the loss for a batch of examples.
@@ -272,9 +293,22 @@ class LanguageIDModel(object):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
-
+        return nn.SoftmaxLoss(self.run(xs), y)
     def train(self, dataset):
         """
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
+        while True:
+            for x, y in dataset.iterate_once(self.batch_size):
+                i = 0
+                loss = self.get_loss(x, y)
+                grad = nn.gradients(loss, [self.weight_input, self.bias_input, self.weight_hidden, self.bias_hidden, self.weight_out, self.bias_out])
+                self.weight_input.update(grad[0], -self.alpha)
+                self.bias_input.update(grad[1], -self.alpha)
+                self.weight_hidden.update(grad[2], -self.alpha)
+                self.bias_hidden.update(grad[3], -self.alpha)
+                self.weight_out.update(grad[4], -self.alpha)
+                self.bias_out.update(grad[5], -self.alpha)
+            if dataset.get_validation_accuracy() >= 0.89:
+                break            
