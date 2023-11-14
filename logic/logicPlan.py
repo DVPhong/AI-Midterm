@@ -241,7 +241,9 @@ def pacmanSuccessorAxiomSingle(x: int, y: int, time: int, walls_grid: List[List[
         return None
     
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    Pos_now = PropSymbolExpr(pacman_str, x, y, time=now) # Check if Pacman is at (x, y) now
+    return Pos_now % disjoin(possible_causes) 
+    #util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
 
@@ -312,7 +314,25 @@ def pacphysicsAxioms(t: int, all_coords: List[Tuple], non_outer_wall_coords: Lis
     pacphysics_sentences = []
 
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    for coord in all_coords:
+        pacphysics_sentences.append(logic.PropSymbolExpr(wall_str, coord[0], coord[1]) >> 
+                                    ~logic.PropSymbolExpr(pacman_str, coord[0], coord[1], time = t))
+    
+    wall_list = [logic.PropSymbolExpr(pacman_str, wall_coordinate[0], wall_coordinate[1], time = t) for wall_coordinate in non_outer_wall_coords]
+    pacphysics_sentences.append(exactlyOne(wall_list))
+
+    action = [logic.PropSymbolExpr(direction, time = t) for direction in DIRECTIONS]
+    pacphysics_sentences.append(exactlyOne(action))
+
+    if sensorModel:
+        pacphysics_sentences.append(sensorModel(t, non_outer_wall_coords))
+
+    if successorAxioms and walls_grid and t:
+        pacphysics_sentences.append(successorAxioms(t, walls_grid, non_outer_wall_coords))
+    
+    return logic.conjoin(pacphysics_sentences)
+
+    #util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
     return conjoin(pacphysics_sentences)
@@ -346,7 +366,18 @@ def checkLocationSatisfiability(x1_y1: Tuple[int, int], x0_y0: Tuple[int, int], 
     KB.append(conjoin(map_sent))
 
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    KB.append(pacphysicsAxioms(0, all_coords, non_outer_wall_coords, walls_grid, sensorModel=None, successorAxioms=allLegalSuccessorAxioms))
+    KB.append(pacphysicsAxioms(1, all_coords, non_outer_wall_coords, walls_grid, sensorModel=None, successorAxioms=allLegalSuccessorAxioms))
+
+    KB.append(logic.PropSymbolExpr(pacman_str, x0, y0, time = 0))
+    KB.append(logic.PropSymbolExpr(action0, time = 0))
+    KB.append(logic.PropSymbolExpr(action1, time = 1))
+
+    model1 = findModel(conjoin(KB) & PropSymbolExpr(pacman_str, x1, y1, time = 1))
+    model2 = findModel(conjoin(KB) & ~PropSymbolExpr(pacman_str, x1, y1, time = 1))
+
+    return (model1, model2)
+    #util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
 #______________________________________________________________________________
