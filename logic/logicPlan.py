@@ -122,12 +122,12 @@ def findModel(sentence: Expr) -> Dict[Expr, bool]:
 def findModelUnderstandingCheck() -> Dict[Expr, bool]:
     """Returns the result of findModel(Expr('a')) if lower cased expressions were allowed.
     You should not use findModel or Expr in this method.
-    Want to return {a : True} , not {'a': True} or {A: True}
     """
     a = Expr('A')
     "*** BEGIN YOUR CODE HERE ***"
     #print("a.__dict__ is:", a.__dict__) # might be helpful for getting ideas
-    
+
+    #Want to return {a : True} , not {'a': True} or {A: True} 
     from sympy import symbols
     b = symbols(str(a).lower())
     return {b: True}
@@ -138,7 +138,7 @@ def entails(premise: Expr, conclusion: Expr) -> bool:
     """Returns True if the premise entails the conclusion and False otherwise.
     """
     "*** BEGIN YOUR CODE HERE ***"
-    if findModel(~conclusion & premise) == False :
+    if findModel(~(premise >> conclusion)) == False:
         return True
     return False
     #util.raiseNotDefined()
@@ -329,8 +329,6 @@ def pacphysicsAxioms(t: int, all_coords: List[Tuple], non_outer_wall_coords: Lis
 
     if successorAxioms and walls_grid and t:
         pacphysics_sentences.append(successorAxioms(t, walls_grid, non_outer_wall_coords))
-    
-    return logic.conjoin(pacphysics_sentences)
 
     #util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
@@ -369,9 +367,9 @@ def checkLocationSatisfiability(x1_y1: Tuple[int, int], x0_y0: Tuple[int, int], 
     KB.append(pacphysicsAxioms(0, all_coords, non_outer_wall_coords, walls_grid, sensorModel=None, successorAxioms=allLegalSuccessorAxioms))
     KB.append(pacphysicsAxioms(1, all_coords, non_outer_wall_coords, walls_grid, sensorModel=None, successorAxioms=allLegalSuccessorAxioms))
 
-    KB.append(logic.PropSymbolExpr(pacman_str, x0, y0, time = 0))
-    KB.append(logic.PropSymbolExpr(action0, time = 0))
-    KB.append(logic.PropSymbolExpr(action1, time = 1))
+    KB.append(PropSymbolExpr(pacman_str, x0, y0, time = 0))
+    KB.append(PropSymbolExpr(action0, time = 0))
+    KB.append(PropSymbolExpr(action1, time = 1))
 
     model1 = findModel(conjoin(KB) & PropSymbolExpr(pacman_str, x1, y1, time = 1))
     model2 = findModel(conjoin(KB) & ~PropSymbolExpr(pacman_str, x1, y1, time = 1))
@@ -469,11 +467,13 @@ def foodLogicPlan(problem) -> List:
 
         for food_pos in food:
             pac_location = PropSymbolExpr(pacman_str, food_pos[0], food_pos[1], time = t)
-            food_location = PropSymbolExpr(food_str, food_pos[0], food_pos[1], time = t)
-            next_food_location = PropSymbolExpr(food_str, food_pos[0], food_pos[1], time = t+1)
+            food_location_t = PropSymbolExpr(food_str, food_pos[0], food_pos[1], time = t)
+            food_location_t1 = PropSymbolExpr(food_str, food_pos[0], food_pos[1], time = t+1)
 
-            KB.append((pac_location & food_location) >> ~next_food_location) 
-            KB.append((~pac_location & food_location) >> next_food_location) 
+            # 1: If pac in food_location at time t then no food at that location at time t+1
+            # 2: If pac not in food_location at time t (havent eaten) then food still in that location at time t+1
+            KB.append((pac_location & food_location_t) >> ~food_location_t1) 
+            KB.append((~pac_location & food_location_t) >> food_location_t1) 
     return None
     util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
