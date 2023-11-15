@@ -478,6 +478,66 @@ def foodLogicPlan(problem) -> List:
     util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
+#----------------------------------------------------------------
+# Helper functions
+from typing import Union
+
+def add_to_KB(KB, t, all_coords, walls_grid, non_outer_wall_coords, agent, slam= False):
+    pac_physics = pacphysicsAxioms(t, all_coords, non_outer_wall_coords, walls_grid,
+                                   SLAMSensorAxioms if slam else sensorAxioms, 
+                                   SLAMSuccessorAxioms if slam else allLegalSuccessorAxioms)
+
+    action = PropSymbolExpr(agent.actions[t], time= t)
+    percepts = numAdjWallsPerceptRules(t, agent.getPercepts()) if slam else fourBitPerceptRules(t, agent.getPercepts())
+
+    KB.append(pac_physics)
+    KB.append(action)
+    KB.append(percepts)
+
+def find_pos_loc_step(KB, t, wall_coord, pos_loc):
+    x, y = wall_coord
+    KB_cjed = conjoin(KB)
+    pac = PropSymbolExpr(pacman_str, x, y, time= t)
+
+    if findModel(KB_cjed & pac):
+        pos_loc.append((x, y))
+    elif entails(KB_cjed, pac):
+        KB.append(pac)
+    elif not entails(KB_cjed, pac):
+        KB.append(~pac)
+
+
+def find_pos_loc(KB, t, non_outer_wall_coords):
+    pos_loc = []
+    for wall_coord in non_outer_wall_coords:
+        find_pos_loc_step(KB, t, wall_coord, pos_loc)
+    return pos_loc
+
+def find_prove_wall_step(KB, wall_coord, known_map):
+    x, y = wall_coord
+    KB_cjed = conjoin(KB)
+    wall = PropSymbolExpr(wall_str, x, y)
+
+    if entails(KB_cjed, wall):
+        KB.append(wall)
+        known_map[x][y] = 1
+        
+    elif entails(KB_cjed, ~wall):
+        KB.append(~wall)
+        known_map[x][y] = 0
+
+    
+def find_prove_wall(KB, non_outer_wall_coords, known_map):
+    for wall_coord in non_outer_wall_coords:
+        find_prove_wall_step(KB, wall_coord, known_map)
+
+def slam_find(KB, t, non_outer_wall_coords, known_map):
+    pos_loc = []
+    for wall_coord in non_outer_wall_coords:
+        find_prove_wall_step(KB, wall_coord, known_map)
+        find_pos_loc_step(KB, t, wall_coord, pos_loc)
+    return pos_loc
+
 #______________________________________________________________________________
 # QUESTION 6
 
@@ -494,9 +554,18 @@ def localization(problem, agent) -> Generator:
     KB = []
 
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    from pprint import pprint
+    for x, y in all_coords:
+        if (x, y) in walls_list:
+            KB.append(PropSymbolExpr(wall_str, x, y))
+        else:
+            KB.append(~PropSymbolExpr(wall_str, x, y))
 
     for t in range(agent.num_timesteps):
+        add_to_KB(KB, t, all_coords, walls_grid, non_outer_wall_coords, agent)
+        possible_locations = find_pos_loc(KB, t, non_outer_wall_coords)
+        agent.moveToNextState(agent.actions[t])
         "*** END YOUR CODE HERE ***"
         yield possible_locations
 
@@ -526,9 +595,16 @@ def mapping(problem, agent) -> Generator:
     KB.append(conjoin(outer_wall_sent))
 
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    init_loc = PropSymbolExpr(pacman_str, pac_x_0, pac_y_0, time= 0)
+    is_wall_init_loc = PropSymbolExpr(wall_str, pac_x_0, pac_y_0)
+
+    KB.append(init_loc)
+    KB.append(~is_wall_init_loc)
 
     for t in range(agent.num_timesteps):
+        add_to_KB(KB, t, all_coords, known_map, non_outer_wall_coords, agent)
+        find_prove_wall(KB, non_outer_wall_coords, known_map)
+        agent.moveToNextState(agent.actions[t])
         "*** END YOUR CODE HERE ***"
         yield known_map
 
@@ -558,9 +634,18 @@ def slam(problem, agent) -> Generator:
     KB.append(conjoin(outer_wall_sent))
 
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    init_loc = PropSymbolExpr(pacman_str, pac_x_0, pac_y_0, time= 0)
+    is_wall_init_loc = PropSymbolExpr(wall_str, pac_x_0, pac_y_0)
+
+    KB.append(init_loc)
+    KB.append(~is_wall_init_loc)
+
+    known_map[pac_x_0][pac_y_0] = 0
 
     for t in range(agent.num_timesteps):
+        add_to_KB(KB, t, all_coords, known_map, non_outer_wall_coords, agent, True)
+        possible_locations = slam_find(KB, t, non_outer_wall_coords, known_map)
+        agent.moveToNextState(agent.actions[t])
         "*** END YOUR CODE HERE ***"
         yield (known_map, possible_locations)
 
