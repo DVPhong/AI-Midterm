@@ -97,10 +97,15 @@ def depthFirstSearch(problem: SearchProblem):
         if problem.isGoalState(expandNodeState[0]):
             goalNodeState = expandNodeState
             break
-        for nodeState in visited:
-            if nodeState[0] == expandNodeState[0]:
-                isVisited = True
-                break
+
+        if len(visited) == 0:
+            visited.append(expandNodeState)                      # add first nodeState to visited
+        else:
+            for nodeState in visited:
+                if nodeState[0] == expandNodeState[0]:
+                    isVisited = True
+                    break
+
         if isVisited == False:
             visited.append(expandNodeState)
             successorList = problem.getSuccessors(expandNodeState[0])
@@ -116,6 +121,7 @@ def depthFirstSearch(problem: SearchProblem):
             for nodeState in visited:
                 if nodeState[0] == goalNodeState[2]:
                     goalNodeState = nodeState
+                    break
         return res
             
     return None
@@ -132,10 +138,15 @@ def breadthFirstSearch(problem: SearchProblem):
         if problem.isGoalState(expandNodeState[0]):
             goalNodeState = expandNodeState
             break
-        for nodeState in visited:
-            if nodeState[0] == expandNodeState[0]:
-                isVisited = True
-                break
+
+        if len(visited) == 0:
+            visited.append(expandNodeState)                      # add first nodeState to visited
+        else:
+            for nodeState in visited:
+                if nodeState[0] == expandNodeState[0]:
+                    isVisited = True
+                    break
+        
         if isVisited == False:
             visited.append(expandNodeState)
             successorList = problem.getSuccessors(expandNodeState[0])
@@ -151,6 +162,7 @@ def breadthFirstSearch(problem: SearchProblem):
             for nodeState in visited:
                 if nodeState[0] == goalNodeState[2]:
                     goalNodeState = nodeState
+                    break
         return res
             
     return None
@@ -167,10 +179,15 @@ def uniformCostSearch(problem: SearchProblem):
         if problem.isGoalState(expandNodeState[0]):
             goalNodeState = expandNodeState
             break
-        for nodeState in visited:
-            if nodeState[0] == expandNodeState[0]:
-                isVisited = True
-                break
+
+        if len(visited) == 0:
+            visited.append(expandNodeState)                      # add first nodeState to visited
+        else:
+            for nodeState in visited:
+                if nodeState[0] == expandNodeState[0]:
+                    isVisited = True
+                    break
+    
         if isVisited == False:
             visited.append(expandNodeState)
             successorList = problem.getSuccessors(expandNodeState[0])
@@ -186,6 +203,7 @@ def uniformCostSearch(problem: SearchProblem):
             for nodeState in visited:
                 if nodeState[0] == goalNodeState[2]:
                     goalNodeState = nodeState
+                    break
         return res
             
     return None

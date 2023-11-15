@@ -382,10 +382,8 @@ def findCornerHeuristic(state, corners):
         if minlength == 0 or temp < minlength:
             minlength = temp
             minCorner = corner
-    print(minCorner)
     corners.remove(minCorner)
     res = minlength + findCornerHeuristic(minCorner, corners)
-    print(res)
     return res
 
 
